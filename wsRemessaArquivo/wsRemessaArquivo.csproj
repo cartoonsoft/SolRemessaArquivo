@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UserSecretsId>dotnet-wsRemessaArquivo-D82F6FAE-4FA7-44FB-9632-7557D3D136AE</UserSecretsId>
+    <ApplicationIcon>Dat.ico</ApplicationIcon>
+    <Company>CartoonSoft Ltda.</Company>
+    <Authors>Ronaldo Moreira</Authors>
+    <Description>Windows service de envio converção e enio de arquivos de Remessa</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Hosting.WindowsServices" Version="3.1.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.EventLog" Version="3.1.2" />
+  </ItemGroup>
+</Project>

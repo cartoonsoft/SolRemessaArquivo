@@ -1,0 +1,10 @@
+﻿{
+  "profiles": {
+    "wsRemessaArquivo": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
