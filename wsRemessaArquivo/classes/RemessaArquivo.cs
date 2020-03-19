@@ -70,40 +70,75 @@ namespace wsRemessaArquivo.classes
 
         }
 
-        public void ProcessarRemessa()
+        private List<string> LerListaEmailsAppSetings(string tipoLista)
         {
-            DeleteTempFile("entrada.txt");
-            DeleteTempFile("saida.txt");
-
-            List<string> listaDest = new List<string>();
-            List<string> listaCC = new List<string>();
-
-            var listaDestTmp = _configuration.GetSection("EmailSettings:recipient_list").AsEnumerable();
-            var listaCctmp = _configuration.GetSection("EmailSettings:cc_list").AsEnumerable();
+            List<string> lista = new List<string>();
+            var listaDestTmp = _configuration.GetSection(tipoLista).AsEnumerable();
 
             foreach (var item in listaDestTmp)
             {
                 if (!string.IsNullOrEmpty(item.Value))
                 {
-                    listaDest.Add(item.Value);
-                }
-            }
-            foreach (var item in listaCctmp)
-            {
-                if (!string.IsNullOrEmpty(item.Value))
-                {
-                    listaCC.Add(item.Value);
+                    lista.Add(item.Value);
                 }
             }
 
-            string[] fileEntries = Directory.GetFiles(targetDirectory);
+            return lista;
+        }
+
+        public void ProcessarRemessa()
+        {
+            DeleteTempFile("entrada.txt");
+            DeleteTempFile("saida.txt");
+
+            List<string> listaDest = this.LerListaEmailsAppSetings("EmailSettings:recipient_list");
+            List<string> listaCC = this.LerListaEmailsAppSetings("EmailSettings:cc_list");
+
+            string caminhoArqOrigemRemessa = this._configuration.GetValue<string>("CaminhoArqOrigemRemessa");
+            string caminhoArqRemessa = this._configuration.GetValue<string>("CaminhoArqRemessa");
+            string caminhoDatR = this._configuration.GetValue<string>("CaminhoDatR");
+            string caminhoArqTemp = this._configuration.GetValue<string>("CaminhoArqTemp");
+            string[] fileEntries = Directory.GetFiles(caminhoArqOrigemRemessa, "PORTAGCA.DAT*");
 
             foreach (string fileName in fileEntries)
             {
-                ProcessFile(fileName);
+                if (File.Exists(fileName))
+                {
+                    string arqDest = "PORTAGCA_" + File.GetCreationTime(fileName).ToString("yyyyMMdd") +".DAT";
+                    string arqEntrada = Path.Combine(caminhoArqTemp, "entrada.txt");
+
+                    try
+                    {
+                        File.Copy(fileName, arqEntrada);
+                        //ExeRun("C:\comp\COBOL34\conv.bat c:\tmp\entrada.txt c:\tmp\saida.txt", exeActive, exeWait)
+                    }
+                    catch (Exception ex) {
+                        Console.WriteLine(ex.Message);
+                        //EnviarEmailErro("Arquivo não copiado para temporário: "+AFile," [Arquivo não copiado para temporário]",0)
+                    }
+
+                    if (File.Exists(Path.Combine(caminhoArqTemp, "saida.txt")))
+                    {
+                        if (!File.Exists(Path.Combine(caminhoArqRemessa, arqDest)))
+                        {
+                            try
+                            {
+                                File.Copy(Path.Combine(caminhoArqTemp, "saida.txt"), Path.Combine(caminhoArqRemessa, arqDest));
+                                File.Copy(Path.Combine(caminhoArqRemessa, arqDest), Path.Combine(caminhoDatR, arqDest));
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine(ex.Message);
+                                //EnviarEmailErro("Arquivo não copiado para: " + "\\192.168.60.150\cartorios01\jgomes\01-PROCESSAMENTO\ABN\"+nomefinal,"[Erro cópia para rede]",0)                            
+                            }
+                        } else {
+                            //EnviarEmailErro("Arquivo já existe: " + "\\192.168.60.150\cartorios01\jgomes\01-PROCESSAMENTO\ABN\"+nomefinal,"[Arquivo destino já existe]",0)                         
+                        }
+                    } else {
+                        //EnviarEmailErro("Arquivo não convertido: c:\tmp\entrada.txt", " [arquivo não convertido COBOL]", 0)
+                    }
+                }
             }
-
-
 
             /*
             string arqOrigem  = Path.Combine(pathRemessa, this._fileName);

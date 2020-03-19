@@ -42,7 +42,6 @@ namespace wsRemessaArquivo
 
                     using (Email email = new Email(emailconfig))
                     {
-
                         using (RemessaArquivo remessa = new RemessaArquivo(_configuration, email))
                         {
                             remessa.ProcessarRemessa();
