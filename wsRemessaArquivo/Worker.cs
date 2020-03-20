@@ -27,18 +27,16 @@ namespace wsRemessaArquivo
             {
                 using (Email email = new Email(_configuration))
                 {
-                    await email.EnviarEmail("Teste Remessa de Arquivo", "Início conversão de arquivo");
-                    /*
+                    //email.EnviarEmail("Teste Remessa de Arquivo",string.Format("Início conversão de arquivo: {0}", DateTimeOffset.Now.ToString()));
                     using (RemessaArquivo remessa = new RemessaArquivo(_configuration, email))
                     {
                         _logger.LogInformation("Início Processando Remessa às: {time}", DateTimeOffset.Now);
                         remessa.ProcessarRemessa();
                         _logger.LogInformation("Fim Processando Remessa às: {time}", DateTimeOffset.Now);
                     }
-                    */
                 }
 
-                await Task.Delay(6000, stoppingToken);
+                await Task.Delay(120000, stoppingToken);
             }
         }
 
