@@ -67,32 +67,11 @@ namespace wsRemessaArquivo.classes
                     //enviar email
                 }
             }
-
         }
-
-        private List<string> LerListaEmailsAppSetings(string tipoLista)
-        {
-            List<string> lista = new List<string>();
-            var listaDestTmp = _configuration.GetSection(tipoLista).AsEnumerable();
-
-            foreach (var item in listaDestTmp)
-            {
-                if (!string.IsNullOrEmpty(item.Value))
-                {
-                    lista.Add(item.Value);
-                }
-            }
-
-            return lista;
-        }
-
         public void ProcessarRemessa()
         {
             DeleteTempFile("entrada.txt");
             DeleteTempFile("saida.txt");
-
-            List<string> listaDest = this.LerListaEmailsAppSetings("EmailSettings:recipient_list");
-            List<string> listaCC = this.LerListaEmailsAppSetings("EmailSettings:cc_list");
 
             string caminhoArqOrigemRemessa = this._configuration.GetValue<string>("CaminhoArqOrigemRemessa");
             string caminhoArqRemessa = this._configuration.GetValue<string>("CaminhoArqRemessa");

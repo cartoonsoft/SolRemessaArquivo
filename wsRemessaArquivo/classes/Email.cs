@@ -10,62 +10,35 @@ using wsRemessaArquivo.Interfaces;
 
 namespace wsRemessaArquivo.classes
 {
-    public class Emailconfig: IDisposable
-    {
-        /// <summary>
-        /// constructor
-        /// </summary>
-        public Emailconfig()
-        {
-
-        }
-
-        // Flag: Has Dispose already been called?
-        private bool disposed = false;
-
-        // Public implementation of Dispose pattern callable by consumers.
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        // Protected implementation of Dispose pattern.
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposed)
-                return;
-
-            if (disposing)
-            {
-                // Free any other managed objects here.
-                //
-            }
-
-            // Free any unmanaged objects here.
-            //
-            disposed = true;
-        }
-
-        ~Emailconfig()
-        {
-            Dispose(false);
-        }
-
-        public string Host { get; set; }
-        public string Sender { get; set; }
-        public string Key { get; set; }
-        public string User { get; set; }
-        public int Port { get; set; }
-    }
 
     public class Email: IEmail
     {
-        private readonly Emailconfig _emailconfig;
+        private readonly IConfiguration _configuration;
+        private List<string> listaDestinatarios { get; set; }
+        private List<string> listaCC { get; set; }
 
-        public Email(Emailconfig emailconfig)
+        public Email(IConfiguration configuration = null)
         {
-            this._emailconfig = emailconfig;
+            if (configuration != null)
+            {
+                this._configuration = configuration;
+                this.Host = _configuration.GetValue<string>("EmailSettings:Host");
+                this.Key = _configuration.GetValue<string>("EmailSettings:Key");
+                if (Int32.TryParse(_configuration.GetValue<string>("EmailSettings:Port"), out int porta))
+                {
+                    this.Port = porta;
+                }
+                else
+                {
+                    this.Port = 587;
+                }
+
+                this.Sender = _configuration.GetValue<string>("EmailSettings:Sender");
+                this.User = _configuration.GetValue<string>("EmailSettings:User");
+
+                this.listaDestinatarios = this.LerListaEmailsAppSetings("EmailSettings:recipient_list");
+                this.listaCC = this.LerListaEmailsAppSetings("EmailSettings:cc_list");
+            }
         }
 
         // Flag: Has Dispose already been called?
@@ -100,6 +73,23 @@ namespace wsRemessaArquivo.classes
             Dispose(false);
         }
 
+        #region Private Prodedures, functions
+        private List<string> LerListaEmailsAppSetings(string tipoLista)
+        {
+            List<string> lista = new List<string>();
+            var listaDestTmp = _configuration.GetSection(tipoLista).AsEnumerable();
+
+            foreach (var item in listaDestTmp)
+            {
+                if (!string.IsNullOrEmpty(item.Value))
+                {
+                    lista.Add(item.Value);
+                }
+            }
+
+            return lista;
+        }
+
         private void Enviar_Email(List<string> listaDestinatarios, List<string> listaCC, string subject, string htmlBody)
         {
             try
@@ -108,15 +98,15 @@ namespace wsRemessaArquivo.classes
                 {
                     using (SmtpClient smtp = new SmtpClient())
                     {
-                        smtp.Host = _emailconfig.Host;
-                        smtp.Port = _emailconfig.Port;
-                        message.IsBodyHtml = true; //to make message body as html  
-                        smtp.EnableSsl = true;
+                        smtp.Host = this.Host;
+                        smtp.Port = this.Port;
+                        //smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
                         smtp.UseDefaultCredentials = false;
-                        smtp.DeliveryMethod = SmtpDeliveryMethod.Network;
-                        smtp.Credentials = new NetworkCredential(_emailconfig.Sender, _emailconfig.Key);
+                        smtp.Credentials = new NetworkCredential(this.User, this.Key);
+                        //smtp.EnableSsl = true;
 
-                        message.From = new MailAddress(_emailconfig.Sender, "Portal de documentos");
+                        message.IsBodyHtml = true; //to make message body as html  
+                        message.From = new MailAddress(this.Sender, "Portal de documentos");
                         foreach (var emailDestinatario in listaDestinatarios)
                         {
                             message.To.Add(new MailAddress(emailDestinatario));
@@ -125,11 +115,17 @@ namespace wsRemessaArquivo.classes
                         {
                             message.To.Add(new MailAddress(emailCC));
                         }
-
-                        message.Subject = "Test";
+                        message.Subject = subject;
                         message.Body = htmlBody;
 
-                        smtp.Send(message);
+                        try
+                        {
+                            smtp.Send(message);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("smtp.Send >> " + ex.Message);
+                        }
                     }
                 }
             }
@@ -138,14 +134,29 @@ namespace wsRemessaArquivo.classes
                 Console.WriteLine(ex.Message);
             }
         }
+        #endregion
 
-        public async Task EnviarEmail(List<string> listaDestinatarios, List<string> listaCC, string subject, string htmlBody)
-        {
-            this.Enviar_Email(listaDestinatarios, listaCC, subject, htmlBody);
-            await Task.Delay(3000);
+        public string Host { get; set; }
+        public string Sender { get; set; }
+        public string Key { get; set; }
+        public string User { get; set; }
+        public int Port { get; set; }
 
+        public List<string> ListaDestinatarios {
+            get { return this.listaDestinatarios; }
+            set { listaDestinatarios = value; }
         }
 
+        public List<string> ListaCC {
+            get { return this.listaCC; }
+            set { listaCC = value; }
+        }
+
+        public async Task EnviarEmail(string subject, string htmlBody)
+        {
+            this.Enviar_Email(this.listaDestinatarios, this.listaCC, subject, htmlBody);
+            await Task.Delay(3000);
+        }
 
     }
 }

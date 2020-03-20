@@ -7,6 +7,15 @@ namespace wsRemessaArquivo.Interfaces
 {
     public interface IEmail : IDisposable
     {
-        Task EnviarEmail(List<string> listaDestinatarios, List<string> listaCC, string subject, string htmlBody);
+        string Host { get; set; }
+        string Sender { get; set; }
+        string Key { get; set; }
+        string User { get; set; }
+        int Port { get; set; }
+
+        List<string> ListaDestinatarios { get; set; }
+        List<string> ListaCC { get; set; }
+
+        Task EnviarEmail( string subject, string htmlBody);
     }
 }

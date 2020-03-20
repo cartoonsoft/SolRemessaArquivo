@@ -25,32 +25,22 @@ namespace wsRemessaArquivo
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                _logger.LogInformation("Remessa de Arquivo iniciado às: {time}", DateTimeOffset.Now);
-
-                using (Emailconfig emailconfig = new Emailconfig())
+                using (Email email = new Email(_configuration))
                 {
-                    emailconfig.Host = _configuration.GetValue<string>("EmailSettings:Host");
-                    emailconfig.Key = _configuration.GetValue<string>("EmailSettings:Hey");
-                    if (Int32.TryParse(_configuration.GetValue<string>("EmailSettings:Port"), out int porta))
+                    await email.EnviarEmail("Teste Remessa de Arquivo", "Início conversão de arquivo");
+                    /*
+                    using (RemessaArquivo remessa = new RemessaArquivo(_configuration, email))
                     {
-                        emailconfig.Port = porta;
-                    } else {
-                        emailconfig.Port = 587;
+                        _logger.LogInformation("Início Processando Remessa às: {time}", DateTimeOffset.Now);
+                        remessa.ProcessarRemessa();
+                        _logger.LogInformation("Fim Processando Remessa às: {time}", DateTimeOffset.Now);
                     }
-                    emailconfig.Sender = _configuration.GetValue<string>("EmailSettings:Sender");
-                    emailconfig.User = _configuration.GetValue<string>("EmailSettings:User");
-
-                    using (Email email = new Email(emailconfig))
-                    {
-                        using (RemessaArquivo remessa = new RemessaArquivo(_configuration, email))
-                        {
-                            remessa.ProcessarRemessa();
-                        }
-                    }
+                    */
                 }
 
                 await Task.Delay(6000, stoppingToken);
             }
         }
+
     }
 }
